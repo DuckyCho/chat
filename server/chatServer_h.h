@@ -6,7 +6,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <pthread.h>
+#include <sys/epoll.h>
+
 
 #endif
 #define ARGUMENTS_COUNT_ERROR "Arguments error!"
@@ -22,6 +23,7 @@
 #define BASIC_ROOM_CAPACITY 5
 #define BUF_SIZE 1024
 #define TITLE_SIZE 30
+#define EPOLL_SIZE 50
 
 typedef struct member{
 	int sockNum;	
@@ -32,7 +34,8 @@ typedef struct member{
 typedef struct chattingRoom {
 	int id;
 	char * title;
-	member_t * inRoomMember;
+	int size;
+	member_t ** inRoomMember;
 } chattingRoom_t;
 
 typedef struct chattingRoomQueue {
@@ -45,13 +48,15 @@ typedef struct chattingRoomQueue {
 typedef enum {justConnect, selectRoom, inChattingRoom}status;
 
 int openServer(char **, int *);
+
 chattingRoomQueue_t * initChattingRoomQueue(void);
 chattingRoom_t * newChattingRoom(int);
-void * initService(void *);
-int listenWait(int);
-void connectQuit(int,char *);
 
+member_t * initMember(int);
 member_t * newMember(void);
-int setMember(member_t *, void *, void *, void *);
-void * showChattingRoom(void *);
+
+void connectQuit(int,char *);
+int setMember(member_t *, int , int , int );
+void showChattingRoom(member_t *, chattingRoomQueue_t *);
 int sendMessage(int, char *, int);
+void readMessage(int, char *,int *);

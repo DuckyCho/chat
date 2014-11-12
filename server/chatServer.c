@@ -18,8 +18,30 @@ a		if(isfull) {채팅방 X개 생성 push}
 int main(int argc, char *argv[]) {
 	
 	int serv_sock;
-	chattingRoomQueue_t * crq;
+	int clnt_sock;
+	
+	char introMessage[18] = "Welcome! Chatting!"; 
+	int write_len;
+	struct sockaddr_in clnt_addr;
+	socklen_t clnt_addr_size;
 
+	struct epoll_event * ep_event;
+	struct epoll_event event;
+	int epfd, event_cnt;
+	
+	char message[BUF_SIZE];
+	char * messageWrong = "Wrong chatting room ID. enter again";
+	int messageWrong_len = 35;
+	int message_len = 0;
+	chattingRoomQueue_t * crq;
+	chattingRoom_t * tmpCr;
+	member_t * memberArr[WAIT_SOCK_NUM*2] = {};
+	member_t * member;
+	
+	int i = 0;
+	int j = 0;
+	int size;
+	int userPickChattingRoom;
 	if(argc!=2){
 		perror(ARGUMENTS_COUNT_ERROR);
 		exit(1);
@@ -29,12 +51,96 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	
 	if( !(crq = initChattingRoomQueue())){
 		perror(CHATTING_ROOM_QUEUE_INIT_FAIL);
 		exit(1);
 	}
 
+	if(listen(serv_sock, WAIT_SOCK_NUM)==-1){
+		perror("Listen error!");
+		exit(1);
+	}
+
+	epfd = epoll_create(EPOLL_SIZE);
+	ep_event = malloc(sizeof(struct epoll_event)*EPOLL_SIZE);
+	
+	event.events = EPOLLIN;
+	event.data.fd = serv_sock;
+	epoll_ctl(epfd, EPOLL_CTL_ADD, serv_sock, &event);
+	while(1){
+		
+		event_cnt = epoll_wait(epfd, ep_event, EPOLL_SIZE,20);
+		if(event_cnt == -1){
+			perror("Epoll wait error!");
+			exit(1);
+		}	
+	
+		for( i  = 0; i <event_cnt; i++){
+			if(ep_event[i].data.fd == serv_sock){
+			
+				clnt_addr_size = sizeof(clnt_addr);
+		    	clnt_sock = accept(serv_sock,(struct sockaddr*)&clnt_addr, &clnt_addr_size);
+				if(clnt_sock==-1){
+					perror("Accept Error!");
+					exit(1);
+				}   
+				    
+				write_len = write(clnt_sock,introMessage,19);
+			
+				if(write_len == -1){
+					perror("writeError!");
+					exit(1);
+				}
+				printf("connect clnt : %d\n",clnt_sock);
+				member = initMember(clnt_sock);
+				memberArr[clnt_sock] = member;
+				showChattingRoom(member,crq);
+
+
+				event.events = EPOLLIN;
+				event.data.fd=clnt_sock;
+				epoll_ctl(epfd, EPOLL_CTL_ADD, clnt_sock, &event);
+			}
+			else{
+				member = memberArr[ep_event[i].data.fd];
+				if(member->status == selectRoom){
+					message[0] = '\0';
+					readMessage(member->sockNum,message,&message_len);
+					printf("userPickChattingRoom : %s\n",message);
+					userPickChattingRoom = atoi(message);
+					if(userPickChattingRoom <= 0 || userPickChattingRoom > crq->size){
+						sendMessage(member->sockNum,messageWrong,messageWrong_len);
+					}
+					else{
+						
+						setMember(memberArr[ep_event[i].data.fd],1,inChattingRoom,userPickChattingRoom);
+						crq->queue[userPickChattingRoom-1]->size++;
+						crq->queue[userPickChattingRoom-1]->inRoomMember[size-1] = member;
+					}
+				}
+				else if(member->status == inChattingRoom){ 
+					message[0] = '\0';
+					readMessage(member->sockNum,message,&message_len);
+					
+					tmpCr = crq->queue[member->chattingRoomId-1];
+					printf("cr id : %d\n",tmpCr->id);
+					printf("cr size : %d\n",tmpCr->size);
+					for(j = 0 ; j < tmpCr->size ; j++){
+						printf("clntSock : %d",tmpCr->inRoomMember[j]->sockNum);
+						sendMessage(tmpCr->inRoomMember[j]->sockNum,message,message_len);
+					}
+								
+				}
+				
+				else{
+					perror("Undefined status!");
+					exit(1);
+				}
+			}	
+		}
+	}
+	
+	
 	printf("%s\n", SHUT_DOWN_MESSAGE);
 
 	close(serv_sock);
@@ -43,72 +149,22 @@ int main(int argc, char *argv[]) {
 	
 }
 
-
-void * initService(void * serv_sockWithQ){
-	int clnt_sock;
-
-	chattingRoomQArgs_t * args  = (chattingRoomQArgs_t *)serv_sockWithQ;
-	
-	int threadCount = 0;
-	int threadStatus;
-	int serv_sock = *(int *)(args->arg);
-	
+member_t * initMember(int clnt_sock){
+		
 	member_t * member;
 		
-	while(1){
-		clnt_sock = listenWait(serv_sock);
-		if(threadCount > WAIT_SOCK_NUM){
-			connectQuit(clnt_sock,SORRY_QUIT);
-			continue;
-	}
-
-		member = newMember();
-		member->sockNum = clnt_sock;
-
-		setMember(member,NULL,(void *)justConnect,(void *)NOT_YET);
-		
-		threadCount++;
-	}
+	member = newMember();
 	
-	return 0;
-}
-
-int listenWait(int serv_sock){
-	
-	char introMessage[18] = "Welcome! Chatting!"; 
-	int clnt_sock;
-	int write_len;
-	struct sockaddr_in clnt_addr;
-	socklen_t clnt_addr_size;
-
-	if(listen(serv_sock, WAIT_SOCK_NUM)==-1){
-		perror("Listen error!");
-		exit(1);
-	}
+	setMember(member, clnt_sock, justConnect, NOT_YET);
 		
-	clnt_addr_size = sizeof(clnt_addr);
-	clnt_sock = accept(serv_sock,(struct sockaddr*)&clnt_addr, &clnt_addr_size);
-	if(clnt_sock==-1){
-		perror("Accept Error!");
-		exit(1);
-	}
-			
-	write_len = write(clnt_sock,introMessage,19);
-	if(write_len == -1){
-		perror("writeError!");
-		exit(1);
-	}
-	printf("connect clnt : %d\n",clnt_sock);
-	return clnt_sock;
-
+	return member;
 }
 
 
 int openServer(char ** arguments,int * serv_sock){
 	
 	struct sockaddr_in serv_addr;
-	char message[]="Welcome! Chatting!";
-	
+		
 	*serv_sock = socket(PF_INET, SOCK_STREAM, 0);
 	
 	if(*serv_sock == -1){
@@ -162,10 +218,8 @@ chattingRoom_t * newChattingRoom(int id){
 	cr->id = id;
 	cr->title = (char *)malloc(sizeof(char)*TITLE_SIZE);
 	strcpy(cr->title,roomTitle);
-	cr->capacity = BASIC_ROOM_CAPACITY;
 	cr->size = 0;
-	cr->inRoomMember = (member_t*)malloc(sizeof(member_t)*BASIC_ROOM_CAPACITY);
-
+	cr->inRoomMember = (member_t**)malloc(sizeof(member_t*)*BASIC_ROOM_CAPACITY);
 	return cr;
 }
 
