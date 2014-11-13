@@ -18,21 +18,14 @@ int main(int argc, char * argv[]){
 	int i = 0;
 	
 	
-
-	
 	WINDOW * windowOrg;
 	WINDOW * windowChat;
-	//int colorChat = init_pair(2,COLOR_WHITE,COLOR_BLACK);
+
 	initscr();
 	windowOrg = newwin(46,80,0,0);
 	windowChat = subwin(stdscr,30,80,0,0);
-	//wbkgd(windowChat,COLOR_PAIR(2));
-	//WINDOW * windowChat = subwin(stdscr,40,80,0,0);
-	//int colorChat = init_pair(2,COLOR_CYAN,COLOR_BLACK);
-	//bkgd(COLOR_PAIR(2));
-	//box(windowChat,'|','-');
-	//werase(windowChat);
-	//wrefresh(windowChat);
+	scrollok(windowChat,TRUE);
+
 	if(argc != 3){
 		perror(ARGUMENT_COUNT_ERROR);
 		exit(1);
@@ -62,13 +55,14 @@ int main(int argc, char * argv[]){
 			perror("Epoll error!");
 			break;
 		}
-		i=0;
-		for( ; i < event_cnt ; i++){
+		
+		for(i = 0 ; i < event_cnt ; i++){
 			memset(message,0,BUF_SIZE);
 			receiveMessage(windowChat,sock,message,BUF_SIZE);
 			 wrefresh(windowChat);
 		}
 	}
+	
 	printf("joinWait");
 	pthread_join(thread,(void**)&status);
 	return 0;
@@ -86,7 +80,8 @@ void * input (void * vp){
 	int sock = (int)vp;
 	
 	wbkgd(windowType,COLOR_PAIR(1));
-
+	scrollok(windowType,TRUE);
+	
 	while(1){
 		werase(windowType);
 		wrefresh(windowType);
@@ -122,48 +117,17 @@ int connectToServer(char ** arguments){
 		perror(CONNECT_ERROR);
 		return -1;
 	}
-
-
-	//str_len = read(sock, message, BUF_SIZE -1);
-	//message[str_len] = '\0';
-	//if(str_len == -1){
-	//	perror("read error!");
-	//	return -1;
-	//}
-
-	//printf("%s\n",message);
-	
 	return sock;
 }
 
 
 int receiveMessage(WINDOW * windowChat,int sock, char * message, int message_len){
-	struct winsize w;
-	int x = 0;
-	int y = 0;
 	int read_len = 0;
 
 	memset(message,0,message_len);
  	read_len = read(sock,message,BUF_SIZE-1);
-	
-	//ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-	//y = w.ws_row-220;
-	//gotoxy(20,y,-1);	
-	//fprintf(stdout,"%s",message);
-	
-	getyx(windowChat,y,x);
-	scrollok(windowChat,TRUE);
-//	if(y >= 27){
 
-//		wmove(windowChat,0,0);
-//		printf("x : %d, y: %d\n",x,y);
-//		wclrtoeol(windowChat);
-//		wmove(windowChat,27,0);
-//	}
 	wprintw(windowChat,"%s\n",message);
-	
-	//printf("%s",message);
-	
 	return 0;
 }
 
@@ -186,10 +150,8 @@ int sendMessage(int sock, char * message, int message_len){
 }
 
 
-
-
-
-
-
-
-
+int quitConnect(int sockNum){
+	char endingMessage[26] = "Quit chatting...BYE BYE!!";
+	sendMessage(sockNum, endingMessage, 25);
+	shutdown(sockNum, SHUT_WR);
+}

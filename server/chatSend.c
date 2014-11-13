@@ -92,15 +92,13 @@ int sendChat(int clnt_sock, char * message, int msgLen, int fromSocket){
 }
 
 void readMessage(int sock, char * message,int message_len, int * read_len){
-	memset(message,0,message_len);
-	
-	
-		*read_len = read(sock,message,BUF_SIZE-1);
-		message[*read_len] = '\0';
-		printf("message recv from %d\n",sock);
 
-		if(*read_len == -1){
-			perror("Read error");
-		}
+	memset(message,0,message_len);
+	*read_len = read(sock,message,BUF_SIZE-1);
+	message[*read_len] = '\0';
+	printf("message recv from %d\n",sock);
+	if(*read_len == -1){
+		perror("Read error");
+	}
 		
 }

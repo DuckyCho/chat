@@ -8,8 +8,8 @@
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <pthread.h>
-#include <sys/ioctl.h>
 #include <ncurses.h>
+
 #endif
 
 #define ARGUMENT_COUNT_ERROR "Arguments count error!"
@@ -22,6 +22,4 @@ int connectToSever(char **);
 int receiveMessage(WINDOW * ,int, char *, int);
 int sendMessage(int, char *, int);
 void * input (void *);
-void gotoxy(int, int, int);
-
 

@@ -1,19 +1,5 @@
 #include "chatServer_h.h"
 
-/**서버 : 
-	연결리퀘스트 기다린다.
-	연결되면 소켓할당한다.
-	가지고 있는것 :  
-		struct 채팅방 {int num, int size, int capacity, int * socketArr(채팅방에 참여한 socketNum)}
-		availabeChattingRoomqueue { available한 채팅방을 가지고 있는다. int capacity, int size, 채팅방 * 채팅방Arr}
-		채팅방 어레이 runningChattingRoomqueue[]
-a		if(isfull) {채팅방 X개 생성 push}
-
-		
-	클라이언트가 보내는 message : 1. messageType[1. 채팅방 입장 2. 채팅 입력]
-**/
-
-
 
 int main(int argc, char *argv[]) {
 	
@@ -33,8 +19,10 @@ int main(int argc, char *argv[]) {
 	char messageWrong[36] = "Wrong chatting room ID. enter again!";
 	int messageWrong_len = 36;
 	int read_len = 0;
+
 	chattingRoomQueue_t * crq;
 	chattingRoom_t * tmpCr;
+	
 	member_t * memberArr[WAIT_SOCK_NUM*2] = {};
 	member_t * member;
 	
@@ -42,6 +30,7 @@ int main(int argc, char *argv[]) {
 	int j = 0;
 	int size;
 	int userPickChattingRoom;
+	
 	if(argc!=2){
 		perror(ARGUMENTS_COUNT_ERROR);
 		exit(1);
@@ -154,21 +143,17 @@ int main(int argc, char *argv[]) {
 member_t * initMember(int clnt_sock){
 		
 	member_t * member;
-		
 	member = newMember();
-	
 	setMember(member, clnt_sock, justConnect, NOT_YET);
-		
 	return member;
+
 }
 
 
 int openServer(char ** arguments,int * serv_sock){
 	
 	struct sockaddr_in serv_addr;
-		
 	*serv_sock = socket(PF_INET, SOCK_STREAM, 0);
-	
 	if(*serv_sock == -1){
 		perror("Socket error!");
 		return -1;	
@@ -177,39 +162,36 @@ int openServer(char ** arguments,int * serv_sock){
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port=htons(atoi(arguments[1]));
-		
 	if( bind(*serv_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) == -1){
 		perror("Bind error!");
-		
 		return -1;
 	}
-	
 	return 0;
+
 }
 
 
 void connectQuit(int clnt_sock,char * comment){
+
 	if(!comment){
 		printf("%s\n",comment);
 	}
-	
 	printf(QUIT_CONNECT_COMMENT);
-
 	close(clnt_sock);
+
 }
 
 
 chattingRoomQueue_t * initChattingRoomQueue(void){
 	int i = 0;
 	chattingRoomQueue_t * crq = (chattingRoomQueue_t *)malloc(sizeof(chattingRoomQueue_t)*1);
-	
 	crq->size = WAIT_SOCK_NUM / 2;
 	crq->queue = (chattingRoom_t **)malloc(sizeof(chattingRoom_t*)*crq->size);
 	for( ; i < crq->size ; i++){
 		crq->queue[i] = newChattingRoom(i+1);
 	}
-	
 	return crq;
+
 }
 
 
@@ -223,6 +205,7 @@ chattingRoom_t * newChattingRoom(int id){
 	cr->size = 0;
 	cr->inRoomMember = (member_t**)malloc(sizeof(member_t*)*BASIC_ROOM_CAPACITY);
 	return cr;
+
 }
 
 
