@@ -72,7 +72,6 @@ void * input (void * vp){
 		message_len = strlen(message);
 		message[message_len] = '\n';
 		printf("userInput : %s",message);
-		//if(strlen(message) > 1)
 		sendMessage(sock,message,message_len);
 	}
 }
@@ -121,11 +120,8 @@ int receiveMessage(int sock, char * message, int message_len){
 	int read_len = 0;
 	memset(message,0,message_len);
  	read_len = read(sock,message,BUF_SIZE-1);
-	
-	//message[read_len] = '\0';
-	printf("recvLen : %d / recvMessage : %s",read_len,message);
-		
-	//memset(message,0,message_len);
+
+	printf("%s",message);
 	
 	return 0;
 }
@@ -133,7 +129,6 @@ int receiveMessage(int sock, char * message, int message_len){
 int sendMessage(int sock, char * message, int message_len){
 	int dupNum = 101;
 	int tmp;
-
 	int send_len;
 	message[message_len] = '\0';
 	
@@ -144,13 +139,7 @@ int sendMessage(int sock, char * message, int message_len){
 	}
 	FILE * fp = fdopen(tmp,"w");
 	fprintf(fp,"%s",message);
-	printf("send Message : %s",message);
 	fclose(fp);
-	//printf("sockNum : %d / length : %d / toServerSendMessage : %s\n",sock,message_len, message);
-	//if( (send_len = write(sock,message,message_len+1) == -1 )){
-	//	perror("Write send error!");
-	//	exit(1);
-	//}
-	//printf("sendLength : %d\n",send_len);
+
 	return 0;
 }
