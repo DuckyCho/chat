@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
 					tmpCr = crq->queue[(member->chattingRoomId)-1];
 					
 					for(j = 0 ; j < tmpCr->size ; j++){
-						if(member->sockNum == tmpCr->inRoomMember[j]->sockNum){continue;}
+					
 						sendChat(tmpCr->inRoomMember[j]->sockNum,message,read_len,member->sockNum);
 					}
 				}

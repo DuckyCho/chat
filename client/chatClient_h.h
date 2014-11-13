@@ -19,9 +19,9 @@
 #define EPOLL_SIZE 4
  
 int connectToSever(char **);
-int receiveMessage(int, char *, int);
+int receiveMessage(WINDOW * ,int, char *, int);
 int sendMessage(int, char *, int);
 void * input (void *);
 void gotoxy(int, int, int);
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
