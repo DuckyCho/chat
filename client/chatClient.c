@@ -16,7 +16,21 @@ int main(int argc, char * argv[]){
 	
 	char message[BUF_SIZE];
 	int i = 0;
+	
+	
 
+	
+	WINDOW * windowOrg;
+	initscr();
+	windowOrg = newwin(46,80,0,0);
+	
+		
+	//WINDOW * windowChat = subwin(stdscr,40,80,0,0);
+	//int colorChat = init_pair(2,COLOR_CYAN,COLOR_BLACK);
+	//bkgd(COLOR_PAIR(2));
+	//box(windowChat,'|','-');
+	//werase(windowChat);
+	//wrefresh(windowChat);
 	if(argc != 3){
 		perror(ARGUMENT_COUNT_ERROR);
 		exit(1);
@@ -32,7 +46,6 @@ int main(int argc, char * argv[]){
 		perror("Thread create error!");
 		exit(1);
 	}	
-	
 
 	epfd = epoll_create(EPOLL_SIZE);
 	ep_events=malloc(sizeof(struct epoll_event) * EPOLL_SIZE);
@@ -60,18 +73,30 @@ int main(int argc, char * argv[]){
 }
 
 void * input (void * vp){
+		
+	//int y;
+	WINDOW * windowType = subwin(stdscr,6,80,40,0);
+	int colorType = init_pair(1,COLOR_CYAN,COLOR_BLACK);
+	bkgd(COLOR_PAIR(1));
+	box(windowType,'|','-');
+	werase(windowType);
+	wrefresh(windowType);
+	//ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	//y = w.ws_row;
+	//setvbuf( stdin, NULL, _IONBF, 0 );
 	while(1){
 		char message[BUF_SIZE];
 		int message_len = 0;
 		int sock = (int)vp;
-		message[0] = '\0';
-		
+	
+
+		memset(message,0,BUF_SIZE);
+
+	//	gotoxy(20,y,strlen(message));
 		fgets(message,BUF_SIZE,stdin);
-		
 		
 		message_len = strlen(message);
 		message[message_len] = '\n';
-		printf("userInput : %s",message);
 		sendMessage(sock,message,message_len);
 	}
 }
@@ -116,12 +141,19 @@ int connectToServer(char ** arguments){
 
 
 int receiveMessage(int sock, char * message, int message_len){
-	 
+	struct winsize w;
+	int y;
 	int read_len = 0;
+
 	memset(message,0,message_len);
  	read_len = read(sock,message,BUF_SIZE-1);
+	
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	y = w.ws_row-220;
+	gotoxy(20,y,-1);	
+	fprintf(stdout,"%s",message);
 
-	printf("%s",message);
+	//printf("%s",message);
 	
 	return 0;
 }
@@ -142,4 +174,13 @@ int sendMessage(int sock, char * message, int message_len){
 	fclose(fp);
 
 	return 0;
+}
+
+void gotoxy(int x, int y, int size){
+	pthread_mutex_lock(&mutex);
+	if(size != -1){
+		x = size;
+	}
+	printf("\x1B[%d,%df",y,x);
+	pthread_mutex_unlock(&mutex);
 }

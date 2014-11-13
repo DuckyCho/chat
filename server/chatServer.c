@@ -125,16 +125,13 @@ int main(int argc, char *argv[]) {
 				else if(member->status == inChattingRoom){ 
 					memset(message,0x00,BUF_SIZE);
 					readMessage(member->sockNum,message,BUF_SIZE,&read_len);
-					printf("Main : %s / readLeng : %d",message,read_len);
-					//printf("clntSock : %d",tmpCr->inRoomMember[j]->sockNum);
+					printf("message from socket : %d, send to room : %d\n",member->sockNum, member->chattingRoomId);
 					tmpCr = crq->queue[(member->chattingRoomId)-1];
-					printf("cr id : %d\n",tmpCr->id);
-					//printf("cr size : %d\n",tmpCr->size);
 					
 					for(j = 0 ; j < tmpCr->size ; j++){
-						sendMessage(tmpCr->inRoomMember[j]->sockNum,message,read_len);
+						if(member->sockNum == tmpCr->inRoomMember[j]->sockNum){continue;}
+						sendChat(tmpCr->inRoomMember[j]->sockNum,message,read_len,member->sockNum);
 					}
-								printf("for loop end!\n");
 				}
 				
 				else{

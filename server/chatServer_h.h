@@ -61,3 +61,4 @@ void showChattingRoom(member_t *, chattingRoomQueue_t *);
 void showRoomInfo(member_t *, chattingRoomQueue_t *);
 int sendMessage(int, char *, int);
 void readMessage(int, char *, int, int*);
+int sendChat(int, char *, int, int);

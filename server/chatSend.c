@@ -41,8 +41,8 @@ void showRoomInfo(member_t * member, chattingRoomQueue_t * crq){
 	int dupfp;
 	dupfp = dup2(member->sockNum,dup2Fd++);
 	FILE * fp = fdopen(dupfp, "w");
-	
-	printf("memberSockNum : %d\n",member->sockNum);
+
+
 	memset(roomInfo,0x00,BUF_SIZE);
 	fprintf(fp,"Welcome! chatroom %d / total member in room : %d\n",cr->id,cr->size);
 	fclose(fp);
@@ -63,17 +63,32 @@ int sendMessage(int clnt_sock, char * message, int msgLen){
 		exit(1);
 	}
 	FILE * fp = fdopen(sendFp,"w");
-	fprintf(fp,"messageTo %d : %s\n",clnt_sock, message);
+	fprintf(fp,"message from Server : %s\n", message);
 
-//	printf("length : %d  / messageSend : %s",msgLen,message);		
-//	send_len = write(clnt_sock,message,msgLen);
-//	if(send_len == -1){
-//		perror("Write error");
-//		return -1;
-//	}
-//	printf("sendLength : %d\n",send_len);
 	fclose(fp);	
 	return 0;
+}
+
+int sendChat(int clnt_sock, char * message, int msgLen, int fromSocket){
+
+	int send_len;
+	int sendFp;
+	static int sendFptmp = 201;
+	if(!message)
+		message = "Empty\n";
+	message[msgLen] = '\0';
+	
+	sendFp = dup2(clnt_sock,sendFptmp++);
+	if(sendFp == -1){
+		perror("dup2 error");
+		exit(1);
+	}
+	FILE * fp = fdopen(sendFp,"w");
+	fprintf(fp,"user %d : %s",fromSocket, message);
+
+	fclose(fp);	
+	return 0;
+
 }
 
 void readMessage(int sock, char * message,int message_len, int * read_len){
@@ -82,12 +97,10 @@ void readMessage(int sock, char * message,int message_len, int * read_len){
 	
 		*read_len = read(sock,message,BUF_SIZE-1);
 		message[*read_len] = '\0';
-		printf("length : %d\t",*read_len);
-		printf("/ messageRecv : %s\n",message);
+		printf("message recv from %d\n",sock);
 
 		if(*read_len == -1){
 			perror("Read error");
 		}
 		
-	
 }
