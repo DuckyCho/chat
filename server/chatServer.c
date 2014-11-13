@@ -30,9 +30,9 @@ int main(int argc, char *argv[]) {
 	int epfd, event_cnt;
 	
 	char message[BUF_SIZE];
-	char * messageWrong = "Wrong chatting room ID. enter again";
-	int messageWrong_len = 35;
-	int message_len = 0;
+	char messageWrong[36] = "Wrong chatting room ID. enter again!";
+	int messageWrong_len = 36;
+	int read_len = 0;
 	chattingRoomQueue_t * crq;
 	chattingRoom_t * tmpCr;
 	member_t * memberArr[WAIT_SOCK_NUM*2] = {};
@@ -91,11 +91,11 @@ int main(int argc, char *argv[]) {
 					perror("writeError!");
 					exit(1);
 				}
+
 				printf("connect clnt : %d\n",clnt_sock);
 				member = initMember(clnt_sock);
 				memberArr[clnt_sock] = member;
 				showChattingRoom(member,crq);
-
 
 				event.events = EPOLLIN;
 				event.data.fd=clnt_sock;
@@ -104,32 +104,37 @@ int main(int argc, char *argv[]) {
 			else{
 				member = memberArr[ep_event[i].data.fd];
 				if(member->status == selectRoom){
-					message[0] = '\0';
-					readMessage(member->sockNum,message,&message_len);
-					printf("userPickChattingRoom : %s\n",message);
+					memset(message,0,BUF_SIZE);
+					readMessage(member->sockNum,message,BUF_SIZE,&read_len);			
 					userPickChattingRoom = atoi(message);
+					printf("userPickChattingRoom : %d\n",userPickChattingRoom);
 					if(userPickChattingRoom <= 0 || userPickChattingRoom > crq->size){
 						sendMessage(member->sockNum,messageWrong,messageWrong_len);
 					}
 					else{
-						
-						setMember(memberArr[ep_event[i].data.fd],1,inChattingRoom,userPickChattingRoom);
+
+						setMember(memberArr[ep_event[i].data.fd],-1,inChattingRoom,userPickChattingRoom);
 						crq->queue[userPickChattingRoom-1]->size++;
+						size = crq->queue[userPickChattingRoom-1]->size;
 						crq->queue[userPickChattingRoom-1]->inRoomMember[size-1] = member;
+						printf("size : %d\n",size);
+						
+						showRoomInfo(member,crq);
 					}
 				}
 				else if(member->status == inChattingRoom){ 
-					message[0] = '\0';
-					readMessage(member->sockNum,message,&message_len);
-					
-					tmpCr = crq->queue[member->chattingRoomId-1];
+					memset(message,0x00,BUF_SIZE);
+					readMessage(member->sockNum,message,BUF_SIZE,&read_len);
+					printf("Main : %s / readLeng : %d",message,read_len);
+					//printf("clntSock : %d",tmpCr->inRoomMember[j]->sockNum);
+					tmpCr = crq->queue[(member->chattingRoomId)-1];
 					printf("cr id : %d\n",tmpCr->id);
-					printf("cr size : %d\n",tmpCr->size);
+					//printf("cr size : %d\n",tmpCr->size);
+					
 					for(j = 0 ; j < tmpCr->size ; j++){
-						printf("clntSock : %d",tmpCr->inRoomMember[j]->sockNum);
-						sendMessage(tmpCr->inRoomMember[j]->sockNum,message,message_len);
+						sendMessage(tmpCr->inRoomMember[j]->sockNum,message,read_len);
 					}
-								
+								printf("for loop end!\n");
 				}
 				
 				else{

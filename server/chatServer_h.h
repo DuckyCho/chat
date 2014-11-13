@@ -1,5 +1,4 @@
 #ifndef CHATSERVER_H_H
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +6,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
+#include <fcntl.h>
 
 
 #endif
@@ -58,5 +58,6 @@ member_t * newMember(void);
 void connectQuit(int,char *);
 int setMember(member_t *, int , int , int );
 void showChattingRoom(member_t *, chattingRoomQueue_t *);
+void showRoomInfo(member_t *, chattingRoomQueue_t *);
 int sendMessage(int, char *, int);
-void readMessage(int, char *,int *);
+void readMessage(int, char *, int, int*);

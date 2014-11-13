@@ -14,7 +14,7 @@
 #define ARGUMENT_COUNT_ERROR "Arguments count error!"
 #define SOCKET_ERROR "Socket error!"
 #define CONNECT_ERROR "Connect error!"
-#define BUF_SIZE 30
+#define BUF_SIZE 1024
 #define EPOLL_SIZE 4
  
 int connectToSever(char **);

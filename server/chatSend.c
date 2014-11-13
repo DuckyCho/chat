@@ -4,7 +4,7 @@
 void showChattingRoom(member_t * member,chattingRoomQueue_t * crq){
 	chattingRoom_t * tmpCr;
 	char chattingRoomList[BUF_SIZE];
-	char * curPeople = "people in this Room";
+	char * curPeople = " people in this Room";
 	char roomId[3];
 	char curPeopleNum[3];
 	int i = 0;
@@ -27,35 +27,67 @@ void showChattingRoom(member_t * member,chattingRoomQueue_t * crq){
 		sprintf(curPeopleNum,"%d",tmpCr->size);
 		strcat(chattingRoomList,"\n");
 	}
-	strcat(chattingRoomList,"To enter chatting room, please enter chatting room ID!!!\n ID :   ");
+	strcat(chattingRoomList,"To enter chatting room, please enter chatting room ID!!!\n");
 	strcat(chattingRoomList,"\0");
 	sendMessage(member->sockNum, chattingRoomList, BUF_SIZE);
 
 }
 
+void showRoomInfo(member_t * member, chattingRoomQueue_t * crq){
+	static int dup2Fd = 101;
+	int chatRoomId = member->chattingRoomId;
+	chattingRoom_t * cr = crq->queue[chatRoomId-1];
+	char roomInfo[BUF_SIZE];
+	int dupfp;
+	dupfp = dup2(member->sockNum,dup2Fd++);
+	FILE * fp = fdopen(dupfp, "w");
+	
+	printf("memberSockNum : %d\n",member->sockNum);
+	memset(roomInfo,0x00,BUF_SIZE);
+	fprintf(fp,"Welcome! chatroom %d / total member in room : %d\n",cr->id,cr->size);
+	fclose(fp);
+}
 
 int sendMessage(int clnt_sock, char * message, int msgLen){
 	
 	int send_len;
-
+	int sendFp;
+	static int sendFptmp = 201;
 	if(!message)
 		message = "Empty\n";
-
-	send_len = write(clnt_sock,message,msgLen+1);
-	if(send_len == -1){
-		perror("Write error");
-		return -1;
-	}
+	message[msgLen] = '\0';
 	
+	sendFp = dup2(clnt_sock,sendFptmp++);
+	if(sendFp == -1){
+		perror("dup2 error");
+		exit(1);
+	}
+	FILE * fp = fdopen(sendFp,"w");
+	fprintf(fp,"messageTo %d : %s\n",clnt_sock, message);
+
+//	printf("length : %d  / messageSend : %s",msgLen,message);		
+//	send_len = write(clnt_sock,message,msgLen);
+//	if(send_len == -1){
+//		perror("Write error");
+//		return -1;
+//	}
+//	printf("sendLength : %d\n",send_len);
+	fclose(fp);	
 	return 0;
 }
 
-void readMessage(int sock, char * message,int * message_len){
-	printf("%s",message);
-	*message_len = 0;
-	*message_len = read(sock,message,BUF_SIZE);
-	if(*message_len == -1){
-		perror("Read error");
-	}
-	message[*message_len] = '\0';
+void readMessage(int sock, char * message,int message_len, int * read_len){
+	memset(message,0,message_len);
+	
+	
+		*read_len = read(sock,message,BUF_SIZE-1);
+		message[*read_len] = '\0';
+		printf("length : %d\t",*read_len);
+		printf("/ messageRecv : %s\n",message);
+
+		if(*read_len == -1){
+			perror("Read error");
+		}
+		
+	
 }

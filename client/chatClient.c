@@ -37,7 +37,7 @@ int main(int argc, char * argv[]){
 	epfd = epoll_create(EPOLL_SIZE);
 	ep_events=malloc(sizeof(struct epoll_event) * EPOLL_SIZE);
 	
-	event.events=EPOLLIN;
+	event.events = EPOLLIN;
 	event.data.fd = sock;
 	epoll_ctl(epfd, EPOLL_CTL_ADD, sock, &event);
 	
@@ -49,11 +49,12 @@ int main(int argc, char * argv[]){
 		}
 		i=0;
 		for( ; i < event_cnt ; i++){
-			message[0] = '\0';
+			memset(message,0,BUF_SIZE);
 			receiveMessage(sock,message,BUF_SIZE);
 		}
 	}
-	
+	printf("joinWait");
+	pthread_join(thread,(void**)&status);
 	return 0;
 
 }
@@ -61,10 +62,17 @@ int main(int argc, char * argv[]){
 void * input (void * vp){
 	while(1){
 		char message[BUF_SIZE];
-		int message_len = BUF_SIZE;
+		int message_len = 0;
 		int sock = (int)vp;
 		message[0] = '\0';
-		fgets(message,BUF_SIZE, stdin);
+		
+		fgets(message,BUF_SIZE,stdin);
+		
+		
+		message_len = strlen(message);
+		message[message_len] = '\n';
+		printf("userInput : %s",message);
+		//if(strlen(message) > 1)
 		sendMessage(sock,message,message_len);
 	}
 }
@@ -94,7 +102,7 @@ int connectToServer(char ** arguments){
 		return -1;
 	}
 
-
+	printf("sockNum : %d",sock);
 	str_len = read(sock, message, BUF_SIZE -1);
 	message[str_len] = '\0';
 	if(str_len == -1){
@@ -111,22 +119,38 @@ int connectToServer(char ** arguments){
 int receiveMessage(int sock, char * message, int message_len){
 	 
 	int read_len = 0;
-
-	while( (read_len = read(sock,message,BUF_SIZE-1)) != -1 ){
- 		message[read_len] = '\0';
-		fputs(message,stdout);
-		//printf("%s",message);
-	}
+	memset(message,0,message_len);
+ 	read_len = read(sock,message,BUF_SIZE-1);
+	
+	//message[read_len] = '\0';
+	printf("recvLen : %d / recvMessage : %s",read_len,message);
+		
+	//memset(message,0,message_len);
 	
 	return 0;
 }
 
 int sendMessage(int sock, char * message, int message_len){
-	
+	int dupNum = 101;
+	int tmp;
+
 	int send_len;
-	if( (send_len = write(sock,message,message_len) == -1 )){
-		perror("Write send error!");
+	message[message_len] = '\0';
+	
+	tmp = dup2(sock,dupNum);
+	if(tmp == -1){
+		perror("dup2error");
 		exit(1);
 	}
+	FILE * fp = fdopen(tmp,"w");
+	fprintf(fp,"%s",message);
+	printf("send Message : %s",message);
+	fclose(fp);
+	//printf("sockNum : %d / length : %d / toServerSendMessage : %s\n",sock,message_len, message);
+	//if( (send_len = write(sock,message,message_len+1) == -1 )){
+	//	perror("Write send error!");
+	//	exit(1);
+	//}
+	//printf("sendLength : %d\n",send_len);
 	return 0;
 }
