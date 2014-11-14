@@ -1,4 +1,6 @@
 #ifndef CHATCLIENT_H_H
+// minsuk: you put "#define CHATCLIENT_H_H" here to avoid multiple header inclusion.
+//         end put match "#endif" be located at the end of file.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +13,7 @@
 #include <ncurses.h>
 
 #endif
+// minsuk: move this #endif to last line in this file. see line 2,3 comments.
 
 #define ARGUMENT_COUNT_ERROR "Arguments count error!"
 #define SOCKET_ERROR "Socket error!"
