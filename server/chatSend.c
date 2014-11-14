@@ -24,11 +24,13 @@ void showChattingRoom(member_t * member,chattingRoomQueue_t * crq){
 		strcat(chattingRoomList," / ");
 		strcat(chattingRoomList,curPeopleNum);
 		strcat(chattingRoomList,curPeople);
+		// minsuk: why don't you use sprintf() rather than strcat?
 		sprintf(curPeopleNum,"%d",tmpCr->size);
 		strcat(chattingRoomList,"\n");
 	}
 	strcat(chattingRoomList,"To enter chatting room, please enter chatting room ID!!!\n");
 	strcat(chattingRoomList,"\0");
+	// minsuk: you don't need this strcap will insert NULL
 	sendMessage(member->sockNum, chattingRoomList, BUF_SIZE);
 
 }
@@ -55,7 +57,9 @@ int sendMessage(int clnt_sock, char * message, int msgLen){
 	static int sendFptmp = 201;
 	if(!message)
 		message = "Empty\n";
+	// minsuk:  will this happen?,  please refer assert()
 	message[msgLen] = '\0';
+	// minsuk: you dont need this
 	
 	sendFp = dup2(clnt_sock,sendFptmp++);
 	if(sendFp == -1){
@@ -95,7 +99,9 @@ void readMessage(int sock, char * message,int message_len, int * read_len){
 
 	memset(message,0,message_len);
 	*read_len = read(sock,message,BUF_SIZE-1);
+	// minsuk: error check needed when *read_len ==0 or < 0
 	message[*read_len] = '\0';
+	// minsuk: this NULL filling whould be the senders work.
 	printf("message recv from %d\n",sock);
 	if(*read_len == -1){
 		perror("Read error");
