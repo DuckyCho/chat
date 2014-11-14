@@ -47,6 +47,7 @@ int main(int argc, char *argv[]) {
 
 	if(listen(serv_sock, WAIT_SOCK_NUM)==-1){
 		perror("Listen error!");
+		// minsuk: close socket before exit
 		exit(1);
 	}
 
@@ -65,6 +66,7 @@ int main(int argc, char *argv[]) {
 		}	
 	
 		for( i  = 0; i <event_cnt; i++){
+		// minsuk: spacing  for(i = 0; ... )
 			if(ep_event[i].data.fd == serv_sock){
 			
 				clnt_addr_size = sizeof(clnt_addr);
@@ -72,13 +74,16 @@ int main(int argc, char *argv[]) {
 				if(clnt_sock==-1){
 					perror("Accept Error!");
 					exit(1);
+					// minsuk: this will close all chatting .. 
 				}   
-				    
+				// minsuk: make the clnt_sock NON BLOCKING here
+				
 				write_len = write(clnt_sock,introMessage,19);
 			
 				if(write_len == -1){
 					perror("writeError!");
 					exit(1);
+					// minsuk: this too
 				}
 
 				printf("connect clnt : %d\n",clnt_sock);
@@ -126,6 +131,7 @@ int main(int argc, char *argv[]) {
 				else{
 					perror("Undefined status!");
 					exit(1);
+					// minsuk: not good: single event error will close all chatting client.
 				}
 			}	
 		}
@@ -166,13 +172,14 @@ int openServer(char ** arguments,int * serv_sock){
 		perror("Bind error!");
 		return -1;
 	}
+	// minsuk: why dont you put listen() here? (it's server thing)
 	return 0;
 
 }
 
 
 void connectQuit(int clnt_sock,char * comment){
-
+// minsuk: in this function, all the data structure clearing should be done.
 	if(!comment){
 		printf("%s\n",comment);
 	}
@@ -187,6 +194,7 @@ chattingRoomQueue_t * initChattingRoomQueue(void){
 	chattingRoomQueue_t * crq = (chattingRoomQueue_t *)malloc(sizeof(chattingRoomQueue_t)*1);
 	crq->size = WAIT_SOCK_NUM / 2;
 	crq->queue = (chattingRoom_t **)malloc(sizeof(chattingRoom_t*)*crq->size);
+	// minsuk: you should check return value of malloc..
 	for( ; i < crq->size ; i++){
 		crq->queue[i] = newChattingRoom(i+1);
 	}
@@ -204,6 +212,7 @@ chattingRoom_t * newChattingRoom(int id){
 	strcpy(cr->title,roomTitle);
 	cr->size = 0;
 	cr->inRoomMember = (member_t**)malloc(sizeof(member_t*)*BASIC_ROOM_CAPACITY);
+	// minsuk: malloc() error check needed
 	return cr;
 
 }
