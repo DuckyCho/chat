@@ -24,6 +24,9 @@
 #define BUF_SIZE 1024
 #define TITLE_SIZE 30
 #define EPOLL_SIZE 50
+#define PICK_CHATTING_ROOM 0
+#define RECEIVE_MESSAGE 1
+#define SEND_MESSAGE 2
 
 typedef struct member{
 	int sockNum;	
@@ -51,14 +54,18 @@ int openServer(char **, int *);
 
 chattingRoomQueue_t * initChattingRoomQueue(void);
 chattingRoom_t * newChattingRoom(int);
-
 member_t * initMember(int);
 member_t * newMember(void);
+
+void printConnectLog (int);
+void printMemberLog(member_t *);
+void printLog(int, int, int);
 
 void connectQuit(int,char *);
 int setMember(member_t *, int , int , int );
 void showChattingRoom(member_t *, chattingRoomQueue_t *);
 void showRoomInfo(member_t *, chattingRoomQueue_t *);
 int sendMessage(int, char *, int);
-void readMessage(int, char *, int, int*);
+void sendIntroMessage(int);
 int sendChat(int, char *, int, int);
+void readMessage(int, char *, int, int*);

@@ -1,5 +1,5 @@
 CC = gcc
-OBJS = chatServer.c chatSend.c chatMember.c chatServer_h.h
+OBJS = chatServer.c chatReadWrite.c chatMember.c chatServer_h.h
 
 all : chatServer
 
