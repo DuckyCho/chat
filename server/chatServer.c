@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
 
 	if(listen(serv_sock, WAIT_SOCK_NUM)==-1){
 		perror("Listen error!");
+		close(serv_sock);
 		exit(1);
 	}
 
@@ -62,14 +63,15 @@ int main(int argc, char *argv[]) {
 			exit(1);
 		}	
 	
-		for( i  = 0; i <event_cnt; i++){
+		for(i = 0; i <event_cnt; i++){
 			if(ep_event[i].data.fd == serv_sock){
 			
 				clnt_addr_size = sizeof(clnt_addr);
 		    	clnt_sock = accept(serv_sock,(struct sockaddr*)&clnt_addr, &clnt_addr_size);
 				if(clnt_sock==-1){
 					perror("Accept Error!");
-					exit(1);
+					close(clnt_sock);
+					continue;
 				}   
 				sendIntroMessage(clnt_sock);
 				printConnectLog(clnt_sock);			
