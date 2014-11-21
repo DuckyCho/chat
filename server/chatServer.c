@@ -73,7 +73,6 @@ int main(int argc, char *argv[]) {
 					close(clnt_sock);
 					continue;
 				}   
-				sendIntroMessage(clnt_sock);
 				printConnectLog(clnt_sock);			
 				member = initMember(clnt_sock);
 				memberArr[clnt_sock] = member;
@@ -107,6 +106,8 @@ int main(int argc, char *argv[]) {
 					if(read_len == 0 ){
 						epoll_ctl(epfd, EPOLL_CTL_DEL, clnt_sock, NULL);
 						close(clnt_sock);
+						tmpCr = crq->queue[(member->chattingRoomId)-1];
+						removeMemberFromRoom(member,tmpCr);
 						continue;
 					}
 					else{
@@ -119,7 +120,7 @@ int main(int argc, char *argv[]) {
 				
 				else{
 					perror("Undefined status!");
-					exit(1);
+					continue;
 				}
 			}	
 		}
@@ -128,6 +129,24 @@ int main(int argc, char *argv[]) {
 	printf("%s\n", SHUT_DOWN_MESSAGE);
 	close(serv_sock);
 	return 0;
+}
+
+void removeMemberFromRoom(member_t * member, chattingRoom_t * cr){
+	int i;
+	member_t tmp;
+	for( i = 0 ; i < cr->size ; i ++ ){
+		if(cr->inRoomMember[i] != member){
+			continue;
+		}
+		else{
+			cr->inRoomMember[i] = cr->inRoomMember[cr->size-1];
+			cr->size--;
+			cr->inRoomMember[cr->size] = NULL;
+			free(member);
+			break;
+		}
+			
+	}
 }
 
 member_t * initMember(int clnt_sock){
@@ -154,15 +173,6 @@ int openServer(char ** arguments,int * serv_sock){
 		return -1;
 	}
 	return 0;
-}
-
-
-void connectQuit(int clnt_sock,char * comment){
-	if(!comment){
-		printf("%s\n",comment);
-	}
-	printf(QUIT_CONNECT_COMMENT);
-	close(clnt_sock);
 }
 
 

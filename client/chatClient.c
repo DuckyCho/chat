@@ -16,7 +16,7 @@ int main(int argc, char * argv[]){
 	
 	char message[BUF_SIZE];
 	int i = 0;
-	
+	int ret = 0;
 	
 	WINDOW * windowOrg;
 	WINDOW * windowChat;
@@ -58,15 +58,25 @@ int main(int argc, char * argv[]){
 		
 		for(i = 0 ; i < event_cnt ; i++){
 			memset(message,0,BUF_SIZE);
-			receiveMessage(windowChat,sock,message,BUF_SIZE);
-			 wrefresh(windowChat);
+			ret = receiveMessage(windowChat,sock,message,BUF_SIZE);
+			if(ret == -1){
+				pthread_cancel(thread);
+				break;
+			}
+			wrefresh(windowChat);
+		}
+		
+		if(ret == -1){
+			break;
 		}
 	}
 	
-	printf("joinWait");
+	epoll_ctl(epfd, EPOLL_CTL_DEL, sock, NULL);
+	close(sock);
 	pthread_join(thread,(void**)&status);
+	delwin(windowOrg);
+	delwin(windowChat);
 	return 0;
-
 }
 
 void * input (void * vp){
@@ -88,7 +98,6 @@ void * input (void * vp){
 		memset(message,0,BUF_SIZE);
  		mvwgetnstr(windowType, 0, 0, message, BUF_SIZE);
 		message_len = strlen(message);
-		message[message_len] = '\n';
 		sendMessage(sock,message,message_len);
 	}
 }
@@ -126,32 +135,31 @@ int receiveMessage(WINDOW * windowChat,int sock, char * message, int message_len
 
 	memset(message,0,message_len);
  	read_len = read(sock,message,BUF_SIZE-1);
-
+	if(read_len == 0){
+		return quitConnect();
+	}
+	message[read_len] = '\0';
 	wprintw(windowChat,"%s\n",message);
 	return 0;
 }
 
 int sendMessage(int sock, char * message, int message_len){
-	int dupNum = 101;
-	int tmp;
-	int send_len;
-	message[message_len] = '\0';
-	
-	tmp = dup2(sock,dupNum);
-	if(tmp == -1){
-		perror("dup2error");
+	int tmpFd;
+	tmpFd = dup(sock);
+	if(tmpFd == -1){
+		perror("dup error");
 		exit(1);
 	}
-	FILE * fp = fdopen(tmp,"w");
+	FILE * fp = fdopen(tmpFd,"w");
+	
 	fprintf(fp,"%s",message);
+	
 	fclose(fp);
-
 	return 0;
 }
 
 
-int quitConnect(int sockNum){
-	char endingMessage[26] = "Quit chatting...BYE BYE!!";
-	sendMessage(sockNum, endingMessage, 25);
-	shutdown(sockNum, SHUT_WR);
+int quitConnect(void){
+	printf("Sorry! Some bad things happened! Quitting Servce....\n");
+	return -1;	
 }

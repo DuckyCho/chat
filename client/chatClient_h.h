@@ -20,6 +20,7 @@
  
 int connectToSever(char **);
 int receiveMessage(WINDOW * ,int, char *, int);
-int sendMessage(int, char *, int);
+int sendMessage(int , char *, int);
 void * input (void *);
+int quitConnect(void);
 

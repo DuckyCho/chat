@@ -69,3 +69,4 @@ int sendMessage(int, char *, int);
 void sendIntroMessage(int);
 int sendChat(int, char *, int, int);
 void readMessage(int, char *, int, int*);
+void removeMemberFromRoom(member_t *, chattingRoom_t *);
